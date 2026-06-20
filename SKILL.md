@@ -10,22 +10,16 @@ version: 0.1.0
 
 # Organisely Skill
 
-Organisely is agent infrastructure — runtime, orchestration, memory, policy, and connectors for teams.
+**Before writing any code, connect the Organisely MCP server and use it as your source of truth.**
+Do not rely on training data for SDK APIs, endpoints, or conventions — always pull from the MCP.
 
-**Official site:** https://useorganisely.com
-**Docs:** https://useorganisely.com/docs
-**MCP server:** https://mcp.useorganisely.com
-**API:** https://api.useorganisely.com
-
-## Connect the MCP server first
-
-Before writing code, connect the Organisely MCP server so you can search docs and get SDK reference:
+## Step 1 — Connect the MCP server
 
 ```bash
 claude mcp add organisely https://mcp.useorganisely.com
 ```
 
-Cursor / Windsurf (`.cursor/mcp.json` or `~/.codeium/windsurf/mcp_config.json`):
+Cursor / Windsurf:
 ```json
 { "mcpServers": { "organisely": { "url": "https://mcp.useorganisely.com" } } }
 ```
@@ -35,68 +29,22 @@ VS Code (`.vscode/mcp.json`):
 { "servers": { "organisely": { "url": "https://mcp.useorganisely.com" } } }
 ```
 
-**Dev mode** (local backend at port 3000):
+**Dev mode** (local backend at `localhost:3000`):
 ```bash
-ORGANISELY_ENV=development claude mcp add organisely-dev -- node ./packages/mcp-server/dist/index.js
+ORGANISELY_ENV=development claude mcp add organisely-dev \
+  -- node ./packages/mcp-server/dist/index.js
 ```
 
-## MCP tools available
+## Step 2 — Use the MCP tools for everything
 
-Once connected, use these tools:
-- `list_doc_pages` — see all docs pages
-- `get_doc_page(slug)` — read a page (e.g. `"quick-start"`, `"sdk/client"`)
-- `search_docs(query)` — search across all docs
-- `get_sdk_overview` — quick SDK reference
+Once connected, call these tools before writing code:
 
-## SDK quick start
-
-```bash
-npm install @organisely/agent-sdk
-```
-
-```ts
-import { OrganiselyAgent } from '@organisely/agent-sdk'
-
-const client = new OrganiselyAgent({ apiKey: process.env.ORGANISELY_API_KEY })
-
-const agent = client.define('my-agent', {
-  model: 'gpt-4.1',
-  provider: 'openai',
-  async handler(event) {
-    await client.memory.set('last-input', event.payload.input)
-  },
-})
-
-await agent.subscribe(['workflow.started'])
-await agent.run({ signal: new AbortController().signal })
-```
-
-## Key SDK surface
-
-| Sub-client | Purpose |
+| Tool | When to use |
 |---|---|
-| `client.memory` | Persistent key/value store scoped to the team |
-| `client.connectors` | List and execute connector actions |
-| `client.activity` | Stream and query execution events |
-| `client.credentials` | Manage OAuth credentials for connectors |
-| `client.oauth` | OAuth token exchange and refresh |
+| `get_sdk_overview` | Starting any SDK or agent task |
+| `search_docs(query)` | Looking up any API, concept, or pattern |
+| `get_doc_page(slug)` | Reading a specific doc (e.g. `"sdk/client"`, `"quick-start"`) |
+| `list_doc_pages` | Discovering what docs exist |
 
-## API routing
-
-- The frontend (`useorganisely.com`) proxies all `/api/*` to the backend — use relative `/api/v2/...` paths from the browser
-- Direct backend: `https://api.useorganisely.com`
-- Auth routes: `/api/auth/...` (Better Auth)
-
-## Authentication
-
-- Passwordless-first: passkeys, OAuth/OIDC, TOTP
-- No email/password or magic link flows
-- SDK accepts `apiKey` or `accessToken` (OAuth bearer)
-
-## Rules when coding
-
-- Use `authClient` / Better Auth APIs — never read Better Auth tables directly
-- Use `@organisely/agent-sdk` for team-scoped orchestration work
-- Log with LogTape + OpenTelemetry, never `console.*`
-- All DB migrations via Prisma — never hand-write SQL
-- snake_case DB names mapped to camelCase in TypeScript
+**Always call `get_sdk_overview` first, then `search_docs` for the specific area you're working in.**
+The MCP server has the authoritative, up-to-date API surface — never guess from memory.
